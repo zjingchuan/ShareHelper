@@ -11,8 +11,10 @@ import com.umeng.socialize.bean.SocializeEntity;
 import com.umeng.socialize.controller.UMServiceFactory;
 import com.umeng.socialize.controller.UMSocialService;
 import com.umeng.socialize.controller.listener.SocializeListeners;
+import com.umeng.socialize.media.UMImage;
 import com.umeng.socialize.utils.Log;
 import com.umeng.socialize.weixin.controller.UMWXHandler;
+import com.umeng.socialize.weixin.media.CircleShareContent;
 import com.umeng.socialize.weixin.media.WeiXinShareContent;
 
 import java.util.ArrayList;
@@ -27,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Log.d(TAG, "device:" + getDeviceInfo(this));
         Intent intent = getIntent();
         String action = intent.getAction();
         String type = intent.getType();
@@ -51,36 +52,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
 
         }
-    }
-
-    public static String getDeviceInfo(Context context) {
-        try {
-            org.json.JSONObject json = new org.json.JSONObject();
-            android.telephony.TelephonyManager tm = (android.telephony.TelephonyManager) context
-                    .getSystemService(Context.TELEPHONY_SERVICE);
-
-            String device_id = tm.getDeviceId();
-
-            android.net.wifi.WifiManager wifi = (android.net.wifi.WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-
-            String mac = wifi.getConnectionInfo().getMacAddress();
-            json.put("mac", mac);
-
-            if (TextUtils.isEmpty(device_id)) {
-                device_id = mac;
-            }
-
-            if (TextUtils.isEmpty(device_id)) {
-                device_id = android.provider.Settings.Secure.getString(context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-            }
-
-            json.put("device_id", device_id);
-
-            return json.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     void handleSendText(Intent intent) {
@@ -117,14 +88,16 @@ public class MainActivity extends AppCompatActivity {
 
 
     void share(String title, String text, Uri imageUri) {
+        Log.d(TAG, "title:" + title + ",text:" + text + ",image:" + (imageUri == null ? "null" : imageUri.toString()));
         UMSocialService controller = UMServiceFactory.getUMSocialService("com.umeng.share");
         // 添加微信朋友圈
         UMWXHandler wxCircleHandler = new UMWXHandler(this, WEIXIN_APP_ID, WEIXIN_APP_SECTET);
         wxCircleHandler.setToCircle(true);
         wxCircleHandler.addToSocialSDK();
-        WeiXinShareContent content = new WeiXinShareContent();
+        CircleShareContent content = new CircleShareContent();
         content.setAppWebSite(text);
         content.setShareContent(text);
+        content.setShareImage(new UMImage(this, R.drawable.ic_launcher));
         if (text != null && text.startsWith("http://"))
             content.setTargetUrl(text);
         if (!TextUtils.isEmpty(title))
